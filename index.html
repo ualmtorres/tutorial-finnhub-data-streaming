@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.17">
-<meta name="author" content="Máster en Tecnonlogías y Aplicaciones en Ingeniería Informática. Universidad de Almería -">
-<title>Desarrollo de un cuadro de mandos con Finnhub Stock</title>
+<meta name="author" content="Máster en Tecnologías y Aplicaciones en Ingeniería Informática. Universidad de Almería -">
+<title>Desarrollo de un cuadro de mandos para Finnhub Stock</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -439,9 +439,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="book toc2 toc-right">
 <div id="header">
-<h1>Desarrollo de un cuadro de mandos con Finnhub Stock</h1>
+<h1>Desarrollo de un cuadro de mandos para Finnhub Stock</h1>
 <div class="details">
-<span id="author" class="author">Máster en Tecnonlogías y Aplicaciones en Ingeniería Informática. Universidad de Almería -</span><br>
+<span id="author" class="author">Máster en Tecnologías y Aplicaciones en Ingeniería Informática. Universidad de Almería -</span><br>
 <span id="revdate">José Antonio Martínez &lt;jmartine@ual.es&gt; y Manuel Torres &lt;mtorres@ual.es&gt;</span>
 </div>
 <div id="toc" class="toc2">
@@ -456,9 +456,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_configuración_inicial_de_la_plataforma">2.3. Configuración inicial de la plataforma</a></li>
 </ul>
 </li>
-<li><a href="#_creación_de_un_componente_spark_streaming">3. Creación de un componente Spark Streaming</a></li>
-<li><a href="#_visualización_de_los_datos_en_grafana">4. Visualización de los datos en Grafana</a></li>
-<li><a href="#_conclusiones">5. Conclusiones</a></li>
+<li><a href="#_desarrollo_de_la_plataforma">3. Desarrollo de la plataforma</a>
+<ul class="sectlevel2">
+<li><a href="#_creación_de_un_productor_de_datos_de_finnhub_stock">3.1. Creación de un productor de datos de Finnhub Stock</a></li>
+<li><a href="#_creación_de_un_consumidor_de_datos_de_kafka">3.2. Creación de un consumidor de datos de Kafka</a></li>
+<li><a href="#_creación_de_un_componente_spark_streaming">3.3. Creación de un componente Spark Streaming</a></li>
+<li><a href="#_visualización_de_los_datos_en_grafana">3.4. Visualización de los datos en Grafana</a></li>
+</ul>
+</li>
+<li><a href="#_conclusiones">4. Conclusiones</a></li>
 </ul>
 </div>
 </div>
@@ -476,7 +482,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_resumen">Resumen</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Finnhub Stock es una API que proporciona datos de acciones en tiempo real, noticias financieras y más. Es una herramienta útil para desarrolladores que desean crear aplicaciones financieras o realizar análisis de datos. En este tutorial vamos a ver cómo crear una plataforma alrededor de la API de Finnhub Stock. La plataforma ofrecerá un cuadro de mandos con información en tiempo real sobre las acciones de una empresa. Los datos obtenidos de la API de Finnhub Stock se enviarán a un servidor Kafka para su procesamiento posterior mediante Spark Streaming. Los datos procesados se almacenarán en una base de datos Cassandra para su consulta y visualización en un cuadro de mandos en Grafana. Con estos componentes, podremos crear una plataforma completa para visualizar los precios en tiempo real de las acciones de una empresa. La plataforma nos permitirá realizar análisis de datos sobre las acciones y tomar decisiones informadas sobre inversiones financieras. La plataforma se instalará en un entorno de pruebas con Docker y se ejecutará sobre una máquina virtual OpenStack, la cual crearemos con Terraform.</p>
+<p>Finnhub Stock es una API que proporciona datos de acciones en tiempo real, noticias financieras y más. Es una herramienta útil para desarrolladores que desean crear aplicaciones financieras o realizar análisis de datos. En este tutorial vamos a ver cómo crear una plataforma alrededor de la API de Finnhub Stock. La plataforma ofrecerá un cuadro de mandos con información en tiempo real sobre las acciones bursátiles de una empresa. Los datos obtenidos de la API de Finnhub Stock se enviarán a un servidor Kafka para su procesamiento posterior mediante Spark Streaming. Los datos procesados se almacenarán en una base de datos Cassandra para su consulta y visualización en un cuadro de mandos en Grafana. Con estos componentes, podremos crear una plataforma completa para visualizar los precios en tiempo real de las acciones de una empresa. La plataforma nos permitirá realizar análisis de datos sobre las acciones y tomar decisiones informadas sobre inversiones financieras. La plataforma se instalará en un entorno de pruebas con Docker y se ejecutará sobre una máquina virtual OpenStack, la cual crearemos con Terraform.</p>
 </div>
 <div class="ulist">
 <div class="title">Objetivos</div>
@@ -489,9 +495,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li>
 <p>Crear un cuadro de mandos interactivo con Grafana para visualizar los precios en tiempo real de las acciones de una empresa.</p>
-</li>
-<li>
-<p>Realizar análisis de datos sobre las acciones y tomar decisiones informadas sobre inversiones financieras.</p>
 </li>
 <li>
 <p>Destacar la importancia de la infraestructura como código (IaC) para despliegues automatizados.</p>
@@ -511,13 +514,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://$$$">Repositorio de creación de la máquina virtual OpenStack con Terraform</a></p>
+<p><a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform">Repositorio de creación de la máquina virtual OpenStack con Terraform</a></p>
 </li>
 <li>
-<p><a href="https://$$$">Repositorio de la plataforma de data streaming y visualización con Docker</a></p>
+<p><a href="https://github.com/ualmtorres/finnhub-data-streaming-docker-compose">Repositorio de la plataforma de data streaming y visualización con Docker</a></p>
 </li>
 <li>
-<p><a href="https://$$$">Repositorio de los productores y consumidores de datos de Finnhub Stock</a></p>
+<p><a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator">Repositorio de los productores, consumidores y procesadores de datos de Finnhub Stock</a></p>
 </li>
 </ul>
 </div>
@@ -531,15 +534,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_introducción">1. Introducción</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><a href="https://finnhub.io/">Finnhub Stock</a> es una API que proporciona datos de acciones en tiempo real, noticias financieras y más. Es una herramienta útil para desarrolladores que desean crear aplicaciones financieras o realizar análisis de datos. Actualmente, Finnhub Stock ofrece una API gratuita con una amplia gama de funcionalidades. Entre estas funcionalidades se incluyen la obtención de precios en tiempo real, datos históricos, información sobre empresas y más. La API de Finnhub Stock es fácil de usar y proporciona una gran cantidad de datos para ayudarte a desarrollar tus aplicaciones financieras.</p>
+<p><a href="https://finnhub.io/">Finnhub Stock</a> es una API que proporciona datos de acciones en tiempo real, noticias financieras y más. Es una herramienta útil para desarrolladores que desean crear aplicaciones financieras o realizar análisis de datos. Actualmente, Finnhub Stock ofrece una API gratuita con una amplia gama de funcionalidades. Entre estas funcionalidades se incluyen la obtención de precios en tiempo real, datos históricos, información sobre empresas y más. Algunas de estas funcionalidades están disponibles en el plan gratuito, mientras que otras requieren una suscripción de pago. Los servicios están disponibles como API REST y Websocket, lo que permite a los desarrolladores elegir la forma de acceder a los datos. La API de Finnhub Stock es fácil de usar y proporciona una gran cantidad de datos para ayudarte a desarrollar tus aplicaciones financieras.</p>
 </div>
 <div class="paragraph">
-<p>En este tutorial vamos a ver cómo crear una plataforma alrededor de la API de Finnhub Stock. La plataforma ofrecerá un cuadro de mandos con información en tiempo real sobre las acciones de una empresa. Para ello, desarrollaremos los siguientes componentes:</p>
+<p>En este tutorial vamos a ver cómo crear una plataforma alrededor de la API de Finnhub Stock. La plataforma creada ofrecerá un cuadro de mandos con información en tiempo real sobre las acciones de una empresa. Para ello, desarrollaremos los siguientes componentes:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Un componente para consumir de la API de Finnhub Stock y obtener los datos de las acciones de una empresa. Este componente realizará solicitudes Websocket a la API para obtener los precios en tiempo real de las acciones. Los datos serán enviados a un servidor Kafka para su procesamiento posterior. Este componente será el productor de datos de la plataforma.</p>
+<p>Un componente para consumir de la API de Finnhub Stock y obtener los datos de las acciones de una empresa. Este componente realizará solicitudes Websocket a la API para obtener los precios en tiempo real de las acciones. Los datos serán enviados a un servidor Kafka para su procesamiento posterior. Este componente actuará como <em>productor</em> de datos a la plataforma.</p>
 </li>
 <li>
 <p>Un componente Spark Streaming para procesar los datos de las acciones en tiempo real. Este componente leerá los datos del servidor Kafka y realizará cálculos sobre los precios de las acciones.</p>
@@ -582,16 +585,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>Apache Kafka: Utilizaremos Apache Kafka como servidor de mensajería para enviar los datos de las acciones al componente Spark Streaming.</p>
+<p>Apache Kafka: Utilizaremos <a href="https://kafka.apache.org/">Apache Kafka</a> como servidor de mensajería para guardar los datos recibidos de la API de Finnhub Stock y enviar los datos de las acciones al componente Spark Streaming.</p>
 </li>
 <li>
-<p>Apache Spark: Utilizaremos Apache Spark para procesar los datos de las acciones en tiempo real y realizar cálculos sobre los precios de las acciones.</p>
+<p>Apache Spark: Utilizaremos <a href="https://spark.apache.org/">Apache Spark</a> para procesar los datos de las acciones en tiempo real y realizar cálculos sobre los precios de las acciones.</p>
 </li>
 <li>
-<p>Cassandra: Utilizaremos Cassandra como base de datos NoSQL para almacenar los datos de las acciones procesados por el componente Spark Streaming.</p>
+<p>Apache Cassandra: Utilizaremos <a href="https://cassandra.apache.org/_/index.html">Apache Cassandra</a> como base de datos NoSQL para almacenar los datos de las acciones procesados por el componente Spark Streaming.</p>
 </li>
 <li>
-<p>Grafana: Utilizaremos Grafana para crear un cuadro de mandos interactivo que muestre los precios en tiempo real de las acciones de una empresa.</p>
+<p>Grafana: Utilizaremos <a href="https://grafana.com/">Grafana</a> para crear un cuadro de mandos interactivo que muestre los precios en tiempo real de las acciones de una empresa.</p>
 </li>
 </ul>
 </div>
@@ -613,12 +616,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </table>
 </div>
 <div class="paragraph">
-<p>Esta plataforma se instalará en un entorno de pruebas con Docker. Dicha plataforma se ejecutará sobre una máquina virtual OpenStack, la cual crearemos con Infraestructura como Código (IaC) con Terraform.</p>
+<p>Esta plataforma se instalará en un entorno de pruebas con Docker. Dicha plataforma se ejecutará sobre una máquina virtual en un cloud OpenStack, la cual crearemos con Infraestructura como Código (IaC) con Terraform.</p>
 </div>
 <div class="sect2">
 <h3 id="_creación_de_la_máquina_virtual_openstack_con_terraform">2.1. Creación de la máquina virtual OpenStack con Terraform</h3>
 <div class="paragraph">
-<p>Terraform es una herramienta de código abierto que permite definir y configurar la infraestructura mediante programación, como código. Con Terraform, podemos definir nuestra infraestructura como código y desplegarla de forma automatizada. Para más información sobre Terraform, puedes consultar este <a href="https://ualmtorres.github.io/SeminarioTerraform/">tutorial sobre despliegue de infraestructura con Terraform</a>.</p>
+<p><a href="https://www.terraform.io/">Terraform</a> es una herramienta de código abierto que permite definir y configurar la infraestructura mediante programación, con código. Con Terraform, podemos definir nuestra infraestructura como código y desplegarla de forma automatizada. Para más información sobre Terraform, puedes consultar este <a href="https://ualmtorres.github.io/SeminarioTerraform/">tutorial sobre despliegue de infraestructura con Terraform</a>.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -645,7 +648,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </td>
 <td class="content">
 <div class="paragraph">
-<p>El código de Terraform se encuentra en este <a href="http://">repositorio de GitHub</a>. El código de Terraform se encuentra en este <a href="http://">repositorio de GitHub</a>.</p>
+<p>El código de Terraform se encuentra en este <a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform">repositorio de GitHub</a>.</p>
 </div>
 </td>
 </tr>
@@ -654,7 +657,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="ulist">
 <ul>
 <li>
-<p>Archivo <code>variables.tf</code>: Define las variables necesarias para la configuración de la máquina virtual, como el nombre de la máquina, la imagen base, el sabor, la red, etc.</p>
+<p>Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform/blob/main/variables.tf"><code>variables.tf</code></a>: Define las variables necesarias para la configuración de la máquina virtual, como el nombre de la máquina, la imagen base, el sabor, la red, etc.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-terraform" data-lang="terraform">variable "openstack_user_name" {} <b class="conum">(1)</b>
@@ -715,7 +718,7 @@ variable "openstack_private_key_file" {} <b class="conum">(12)</b></code></pre>
 </div>
 </li>
 <li>
-<p>Archivo <code>terraform.tfvars</code>: Define los valores de las variables necesarias para la configuración de la máquina virtual.</p>
+<p>Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform/blob/main/terraform.tfvars.example"><code>terraform.tfvars</code></a>: Define los valores de las variables necesarias para la configuración de la máquina virtual.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-terraform" data-lang="terraform">openstack_user_name   = "********"
@@ -726,12 +729,19 @@ cidr                  = "********"
 
 image_name            = "********"
 availability_zone     = "********"
-flavor_name           = "********"
+flavor_name           = "********" <b class="conum">(1)</b>
 network_name          = "********"
 floating_ip           = "********"
 
 openstack_private_key_file = "********"</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>El tamaño de la instancia será de al menos 32 GB de RAM y 8 CPUs por la cantidad de servicios que se van a ejecutar y las necesidades de Spark Streaming.</p>
+</li>
+</ol>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -749,7 +759,7 @@ openstack_private_key_file = "********"</code></pre>
 </div>
 </li>
 <li>
-<p>Archivo <code>provider.tf</code>: Define el proveedor de OpenStack y las credenciales necesarias para autenticarse en OpenStack.</p>
+<p>Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform/blob/main/providers.tf"><code>provider.tf</code></a>: Define el proveedor de OpenStack y las credenciales necesarias para autenticarse en OpenStack.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-terraform" data-lang="terraform">terraform {
@@ -771,7 +781,21 @@ provider "openstack" {
 </div>
 </li>
 <li>
-<p>Archivo <code>security-groups.tf</code>: Define el grupo de seguridad de OpenStack y las reglas necesarias para acceder a los componentes expuestos de la plataforma.</p>
+<p>Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform/blob/main/security-groups.tf"><code>security-groups.tf</code></a>: Define el grupo de seguridad de OpenStack y las reglas necesarias para acceder a los componentes expuestos de la plataforma.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Se necesitan reglas de seguridad al menos para los puertos 22 (SSH), 443 (HTTPS), 19000 (Kafdrop), 4000 (Cassandra Web), 3000 (Grafana) y 8080 (Spark Master).</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-terraform" data-lang="terraform"># Create tradedataprocessing security group
@@ -830,20 +854,54 @@ resource "openstack_networking_secgroup_rule_v2" "grafana" {
   security_group_id = openstack_networking_secgroup_v2.tradedataprocessing.id
 }
 
-resource "openstack_networking_secgroup_rule_v2" "sparkcluster" {
-  description       = "sparkcluster"
+resource "openstack_networking_secgroup_rule_v2" "sparkmaster" {
+  description       = "sparkmaster"
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
   port_range_max    = 8080
   port_range_min    = 8080
   security_group_id = openstack_networking_secgroup_v2.tradedataprocessing.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sparkhistoryserver" {
+  description       = "sparkhistoryserver"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_max    = 18080
+  port_range_min    = 18080
+  security_group_id = openstack_networking_secgroup_v2.tradedataprocessing.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "hadoopjobhistory" {
+  description       = "hadoopjobhistory"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_max    = 19888
+  port_range_min    = 19888
+  security_group_id = openstack_networking_secgroup_v2.tradedataprocessing.id
 }</code></pre>
 </div>
 </div>
 </li>
 <li>
-<p>Archivo <code>main.tf</code>: Define los recursos de Terraform necesarios para crear la máquina virtual en OpenStack.</p>
+<p>Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform/blob/main/main.tf"><code>main.tf</code></a>: Define los recursos de Terraform necesarios para crear la máquina virtual en OpenStack.</p>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>La máquina virtual creada se aprovisionará con Docker y otros componentes necesarios para instalar la plataforma de data streaming y visualización de Finnhub Stock. Esto se hará mediante un script de inicialización que se ejecutará al crear la máquina virtual.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-terraform" data-lang="terraform">resource "openstack_compute_instance_v2" "tradedataprocessing_instance" {
@@ -857,7 +915,7 @@ resource "openstack_networking_secgroup_rule_v2" "sparkcluster" {
     name = var.network_name
   }
 
-  user_data = file("tradedataprocessing-setup.sh")
+  user_data = file("tradedataprocessing-setup.sh") <b class="conum">(1)</b>
 }
 
 resource "openstack_compute_floatingip_associate_v2" "ip_assoc" {
@@ -870,9 +928,16 @@ resource "openstack_compute_floatingip_associate_v2" "ip_assoc" {
 }</code></pre>
 </div>
 </div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Archivo <code>tradedataprocessing-setup.sh</code>: Script de inicialización de la máquina virtual.</p>
+</li>
+</ol>
+</div>
 </li>
 <li>
-<p>Archivo <code>tradedataprocessing-setup.sh</code>: Script de inicializació de la máquina virtual para la instalación de Docker y otros componentes necesarios (p.e. <code>curl</code>, <code>make</code>).</p>
+<p>Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-terraform/blob/main/tradedataprocessing-setup.sh"><code>tradedataprocessing-setup.sh</code></a>: Script de inicializació de la máquina virtual para la instalación de Docker y otros componentes necesarios (p.e. <code>curl</code>, <code>make</code>).</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-shell" data-lang="shell">#!/bin/bash
@@ -919,27 +984,57 @@ $ terraform apply</code></pre>
 <div class="sect2">
 <h3 id="_creación_de_la_plataforma_de_data_streaming_y_visualización_con_docker">2.2. Creación de la plataforma de data streaming y visualización con Docker</h3>
 <div class="paragraph">
-<p>Una vez creada la máquina virtual en OpenStack, podemos proceder a instalar la plataforma de data streaming y visualización de Finnhub Stock con Docker. Para ello, utilizaremos Docker Compose para definir y ejecutar los servicios necesarios para la plataforma. El código de Docker Compose se encuentra en este <a href="http://">repositorio de GitHub</a>. En el archivo <code>docker-compose.yml</code> se definen los servicios necesarios para la plataforma:</p>
+<p>Una vez creada la máquina virtual en OpenStack, podemos proceder a instalar la plataforma de data streaming y visualización de Finnhub Stock con Docker. Para ello, utilizaremos Docker Compose para definir y ejecutar los servicios necesarios para la plataforma. El código de Docker Compose se encuentra en este <a href="https://github.com/ualmtorres/finnhub-data-streaming-docker-compose">repositorio de GitHub</a>. En el archivo <code>docker-compose.yml</code> se definen los servicios necesarios para la plataforma:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Kafka</strong>
-<strong>Zookeeper</strong>: Servidor de coordinación distribuida para Apache Kafka.
-<strong>Kafka</strong>: Servidor de mensajería para enviar los datos de las acciones al componente Spark Streaming.
-<strong>Kafdrop</strong>: Interfaz web para visualizar los temas y los mensajes de Kafka.</p>
+<p><strong>Kafka</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Zookeeper</strong>: Servidor de coordinación distribuida para *Apache Kafka.</p>
 </li>
 <li>
-<p><strong>Spark</strong>
-<strong>Spark Master</strong>: Servidor maestro de Apache Spark.
-<strong>Spark Worker</strong>: Servidor esclavo de Apache Spark.
-<strong>Spark History Server</strong>: Servidor de historial de Apache Spark para visualizar los trabajos y las etapas de Spark.</p>
+<p><strong>Kafka</strong>: Servidor de mensajería para enviar los datos de *las acciones al componente Spark Streaming.</p>
 </li>
 <li>
-<p><strong>Cassandra</strong>
-<strong>Cassandra</strong>: Cluster de Cassandra para almacenar los datos de las acciones.
-<strong>Cassandra init</strong>: Script de inicialización de Cassandra para crear las tablas necesarias.
-<strong>Cassandra Web</strong>: Interfaz web para visualizar y gestionar la base de datos Cassandra.</p>
+<p><strong>Kafdrop</strong>: Interfaz web para visualizar los temas y los mensajes de Kafka.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Spark</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Spark Master</strong>: Servidor maestro de Apache Spark.</p>
+</li>
+<li>
+<p><strong>Spark Worker</strong>: Servidor esclavo de Apache Spark.</p>
+</li>
+<li>
+<p><strong>Spark History Server</strong>: Servidor de historial de Apache Spark para visualizar los trabajos y las etapas de Spark.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Cassandra</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Cassandra</strong>: Cluster de Cassandra para almacenar los datos de las acciones.</p>
+</li>
+<li>
+<p><strong>Cassandra init</strong>: Componenete de inicialización de Cassandra para crear las tablas necesarias.</p>
+</li>
+<li>
+<p><strong>Cassandra Web</strong>: Interfaz web para visualizar y gestionar la base de datos Cassandra.</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p><strong>Grafana</strong>: Servidor de Grafana para visualizar los datos de las acciones en tiempo real.</p>
@@ -957,39 +1052,83 @@ $ terraform apply</code></pre>
 <pre class="highlight"><code class="language-shell" data-lang="shell">EXTERNAL_IP= "********"</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
 <div class="paragraph">
-<p>Para algunos servicios, como Zookeper, Kafka, Kafdrop, Cassandra, Cassandra Web, Cassandra init y Grafana, usaremos imágenes de Docker que se encuentran en el Docker Hub. Sin embargo, para los servicios de Spark y Jupyter, construiremos las imágenes en el momento de la ejecución. Para ello, definimos los Dockerfiles correspondientes. Todos los archivos necesarios para construir las imágenes de Docker se encuentran en el repositorio.</p>
+<p>El script de inicialización de la máquina virtual ha creado un archivo <code>.env</code> con la dirección IP flotante de la máquina virtual. El archivo se encuentra en el directorio <code>/home/ubuntu</code> de la máquina virtual. A la hora de ejecutar Docker Compose, se podrá usar ese archivo para definir la dirección IP de la máquina virtual en los servicios que lo necesiten (p.e. Kafka y Cassandra Web).</p>
+</div>
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
-<p>Para ejecutar la plataforma de data streaming y visualización de Finnhub Stock, utilizamos el siguiente comando:</p>
+<p>Para algunos servicios, como Zookeper, Kafka, Kafdrop, Cassandra, Cassandra Web, Cassandra init y Grafana, usaremos imágenes de Docker que se encuentran en el Docker Hub. Sin embargo, para los servicios de Spark y Jupyter, construiremos las imágenes en el momento de la ejecución. Para ello, definimos los Dockerfiles correspondientes. Todos los archivos necesarios para construir las imágenes de Docker se encuentran en el <a href="https://github.com/ualmtorres/finnhub-data-streaming-docker-compose">repositorio</a>.</p>
+</div>
+<div class="paragraph">
+<p>Para ejecutar la plataforma de data streaming y visualización de Finnhub Stock, utilizamos el siguiente comando cargando las variables de entorno del archivo <code>/home/ubuntu/.env</code>. Este archivo contiene la dirección IP de la máquina virtual que necesitan algunos servicios para comunicarse entre sí y ha sido creado por el script de inicialización de la máquina virtual.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-shell" data-lang="shell">$ docker-compose up -d</code></pre>
+<pre class="highlight"><code class="language-shell" data-lang="shell">$ docker-compose up -d --env-file /home/ubuntu/.env</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Tras unos minutos, la plataforma estará desplegada y lista para su uso. Docker Compose habrá creado los siguientes servicios en la máquina virtual. Algunos de ellos serán accesibles a través de la dirección IP de la máquina virtual en los puertos correspondientes. Otros no serán accesibles desde el exterior, pero se comunicarán entre sí en la red interna de Docker. Y otros, simplemente habrán sido creados para la configuración de la plataforma. A continuación, se muestra un resumen de los servicios creados:</p>
+<p>Tras unos minutos, la plataforma estará desplegada y lista para su uso. Docker Compose habrá creado los siguientes servicios en la máquina virtual. Algunos de ellos serán accesibles a través de la dirección IP de la máquina virtual en los puertos correspondientes. Otros no es necesario que sean accesibles desde el exterior, y simplemente se comunicarán entre sí por la red interna de Docker. Y otros, simplemente habrán sido creados para la configuración de la plataforma. A continuación, se muestra un resumen de los servicios creados:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Kafka</strong>
-<strong>Zookeeper</strong>: No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.
-<strong>Kafka</strong>: Instalación de un solo nodo. No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.
-<strong>Kafdrop</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 19000.</p>
+<p><strong>Kafka</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Zookeeper</strong>: No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.</p>
 </li>
 <li>
-<p><strong>Spark</strong>
-<strong>Spark Master</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 8080.
-<strong>Spark Worker</strong>: No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.
-<strong>Spark History Server</strong>: No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.</p>
+<p><strong>Kafka</strong>: Instalación de un solo nodo. No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.</p>
 </li>
 <li>
-<p><strong>Cassandra</strong>
-<strong>Cassandra</strong>: Instalación de tres nodos en modo cluster. No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.
-<strong>Cassandra init</strong>: Su cometido es inicializar la base de datos Cassandra. Una vez finalizada su tarea, se detiene automáticamente. Por tanto, no tiene que exponer ningún puerto.
-<strong>Cassandra Web</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 4000.</p>
+<p><strong>Kafdrop</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 19000.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Spark</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Spark Master</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 8080.</p>
+</li>
+<li>
+<p><strong>Spark Worker</strong>: No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.</p>
+</li>
+<li>
+<p><strong>Spark History Server</strong>: Accesible a través de la dirección IP de la máquina virtual en los puertos 18080 y 19888.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Cassandra</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Cassandra</strong>: Instalación de tres nodos en modo cluster. No es necesario acceder a este servicio directamente por lo que no se tiene que exponer ningún puerto.</p>
+</li>
+<li>
+<p><strong>Cassandra init</strong>: Su cometido es inicializar la base de datos Cassandra. Una vez finalizada su tarea, se detiene automáticamente. Por tanto, no tiene que exponer ningún puerto.</p>
+</li>
+<li>
+<p><strong>Cassandra Web</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 4000.</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p><strong>Grafana</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 3000.</p>
@@ -997,31 +1136,24 @@ $ terraform apply</code></pre>
 <li>
 <p><strong>Jupyter</strong>: Accesible a través de la dirección IP de la máquina virtual en el puerto 443.</p>
 </li>
-<li>
-<p>Un servidor de Kafka en el puerto 9092 para enviar los datos de las acciones al componente Spark Streaming.</p>
-</li>
-<li>
-<p>Un servidor de Spark en el puerto 8080 para procesar los datos de las acciones en tiempo real.
-para enviar los datos de las acciones al componente Spark Streaming.</p>
-</li>
 </ul>
 </div>
 <div class="paragraph">
-<p>Podremos acceder a los servicios de la plataforma a través de la dirección IP de la máquina virtual en los puertos correspondientes:</p>
+<p>De esta forma, podremos acceder a los servicios de la plataforma a través de la dirección IP de la máquina virtual en los puertos correspondientes:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Kafdrop: <a href="http://EXTERNAL_IP:19000" class="bare">http://EXTERNAL_IP:19000</a></p>
+<p>Grafana: <a href="http://EXTERNAL_IP:3000" class="bare">http://EXTERNAL_IP:3000</a></p>
 </li>
 <li>
 <p>Spark Master: <a href="http://EXTERNAL_IP:8080" class="bare">http://EXTERNAL_IP:8080</a></p>
 </li>
 <li>
-<p>Cassandra Web: <a href="http://EXTERNAL_IP:4000" class="bare">http://EXTERNAL_IP:4000</a></p>
+<p>Kafdrop: <a href="http://EXTERNAL_IP:19000" class="bare">http://EXTERNAL_IP:19000</a></p>
 </li>
 <li>
-<p>Grafana: <a href="http://EXTERNAL_IP:3000" class="bare">http://EXTERNAL_IP:3000</a></p>
+<p>Cassandra Web: <a href="http://EXTERNAL_IP:4000" class="bare">http://EXTERNAL_IP:4000</a></p>
 </li>
 <li>
 <p>Jupyter: <a href="https://EXTERNAL_IP:443" class="bare">https://EXTERNAL_IP:443</a></p>
@@ -1040,7 +1172,7 @@ para enviar los datos de las acciones al componente Spark Streaming.</p>
 <div class="sect3">
 <h4 id="_configuración_de_kafka">2.3.1. Configuración de Kafka</h4>
 <div class="paragraph">
-<p>Kafka es un servidor de mensajería que utilizaremos para enviar los datos de las acciones al componente Spark Streaming. Para configurar Kafka, necesitaremos crear un tema en el servidor de Kafka y configurar el productor de datos para enviar los datos al tema. Lo haremos con comandos en el contenedor de Kafka. A continuación, muestra cómo crear el tema <code>market</code> en Kafka.</p>
+<p>Kafka es un servidor de mensajería que utilizaremos para enviar los datos de las acciones al componente Spark Streaming. Para configurar Kafka, necesitaremos crear un tema en el servidor de Kafka y configurar el productor de datos para enviar los datos al tema. La creación del tema la haremos con comandos en el contenedor de Kafka. A continuación, muestra cómo crear el tema <code>market</code> en Kafka.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1084,16 +1216,22 @@ $ conda activate python3_10</code></pre>
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_creación_de_un_productor_de_datos_de_finnhub_stock">2.3.3. Creación de un productor de datos de Finnhub Stock</h4>
-<div class="paragraph">
-<p>Para enviar los datos de las acciones al servidor de Kafka, necesitaremos crear un productor de datos que consuma la API de Finnhub Stock y envíe los datos al tema <code>market</code> de Kafka. El productor de datos lo programaremos en Python y lo ejecutaremos desde el entorno python3_10 de Anaconda. A continuación, se muestra un ejemplo de código para un productor de datos de Finnhub Stock en Python.</p>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_desarrollo_de_la_plataforma">3. Desarrollo de la plataforma</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<div class="title">Archivo <code>requirements.txt</code>: Fichero con las dependencias necesarias para el productor de datos.</div>
-<p>+</p>
+<p>Una vez configurada la plataforma, podemos empezar a desarrollar los componentes necesarios para enviar, procesar y visualizar los datos de las acciones de una empresa. En los siguientes pasos, veremos cómo desarrollar los componentes de la plataforma.</p>
+</div>
+<div class="sect2">
+<h3 id="_creación_de_un_productor_de_datos_de_finnhub_stock">3.1. Creación de un productor de datos de Finnhub Stock</h3>
+<div class="paragraph">
+<p>Para enviar los datos de las acciones al servidor de Kafka, necesitaremos crear un productor de datos que consuma la API de Finnhub Stock y envíe los datos al tema <code>market</code> de Kafka. El productor de datos lo programaremos en Python y lo ejecutaremos desde el entorno <code>python3_10</code> de Anaconda. A continuación, se muestra un ejemplo de código para un productor de datos de Finnhub Stock en Python. El código del productor se puede encontrar en la carpeta <code>producer</code> de <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator">este repositorio de GitHub</a>.</p>
 </div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/producer/requirements.txt"><code>requirements.txt</code></a> con las dependencias necesarias para el productor de datos.</div>
 <div class="content">
 <pre class="highlight"><code>websockets
 websocket-client
@@ -1102,14 +1240,11 @@ kafka-python
 avro</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<div class="title">Arvhivo <code>config.json</code>: Fichero de configuración con la clave de la API de Finnhub Stock.</div>
-<p>+</p>
-</div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/producer/config.json"><code>config.json</code></a> de configuración con la clave de la API de Finnhub Stock.</div>
 <div class="content">
 <pre class="highlight"><code class="language-json" data-lang="json">{
-  "KAFKA_SERVER": "localhost",
+  "KAFKA_SERVER": "kafka",
   "KAFKA_PORT": "29092",
   "KAFKA_TOPIC_NAME": "market",
   "FINNHUB_API_KEY": "**********" <b class="conum">(1)</b>
@@ -1123,11 +1258,8 @@ avro</code></pre>
 </li>
 </ol>
 </div>
-<div class="paragraph">
-<div class="title">Archivo <code>producer.py</code>: Productor de datos de Finnhub Stock en Python.</div>
-<p>+</p>
-</div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/producer/producer.py"><code>producer.py</code></a> productor de datos de Finnhub Stock en Python.</div>
 <div class="content">
 <pre class="highlight"><code class="language-python" data-lang="python">import os
 import websocket
@@ -1153,7 +1285,7 @@ class FinnhubProducer:
         #self.producer = KafkaProducer(bootstrap_servers=f"{self.config['KAFKA_SERVER']}:{self.config['KAFKA_PORT']}",api_version=(0, 10, 1))
 
 
-        kafka_servers=["localhost:29092"]
+        kafka_servers=[config['KAFKA_SERVER'] + config['KAFKA_PORT']]
         self.producer = KafkaProducer(bootstrap_servers = kafka_servers,api_version=(0, 10, 1))
 
         # define the avro schema here. This assumes the schema is already defined in the src/schemas folder
@@ -1304,16 +1436,13 @@ if __name__ == "__main__":
 <p>Con el productor de datos en funcionamiento, los datos de Finnhub Stock se están enviando ya al servidor de Kafka para su procesamiento posterior por el componente Spark Streaming. Antes de pasar a crear el componente de Spark Streaming, crearemos un pequeño consumidor de datos para verificar que los datos se están enviando correctamente al servidor de Kafka.</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_creación_de_un_consumidor_de_datos_de_kafka">2.3.4. Creación de un consumidor de datos de Kafka</h4>
+<div class="sect2">
+<h3 id="_creación_de_un_consumidor_de_datos_de_kafka">3.2. Creación de un consumidor de datos de Kafka</h3>
 <div class="paragraph">
-<p>Para verificar que los datos se están enviando correctamente al servidor de Kafka, crearemos un consumidor de datos que lea los mensajes del tema <code>market</code> de Kafka. El consumidor de datos lo programaremos en Python y lo ejecutaremos desde el entorno python3_10 de Anaconda.</p>
-</div>
-<div class="paragraph">
-<div class="title">Archivo <code>requirements.txt</code>: Fichero con las dependencias necesarias para el consumidor de datos.</div>
-<p>+</p>
+<p>Para verificar que los datos se están enviando correctamente al servidor de Kafka, crearemos un consumidor de datos que lea los mensajes del tema <code>market</code> de Kafka. El consumidor de datos lo programaremos en Python y lo ejecutaremos desde el entorno <code>python3_10</code> de Anaconda. El código del consumidor de datos se puede encontrar en la carpeta <code>consumer</code> de <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator">este repositorio de GitHub</a>.</p>
 </div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/consumer/requirements.txt"><code>requirements.txt</code></a> con las dependencias necesarias para el consumidor de datos.</div>
 <div class="content">
 <pre class="highlight"><code>websockets
 websocket-client
@@ -1322,11 +1451,8 @@ kafka-python
 avro</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<div class="title">Archivo <code>consumer.py</code>: Consumidor de datos de Kafka en Python.</div>
-<p>+</p>
-</div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/consumer/consumer.py"><code>consumer.py</code></a> consumidor de datos de Kafka en Python.</div>
 <div class="content">
 <pre class="highlight"><code class="language-python" data-lang="python">from kafka import KafkaConsumer
 import json
@@ -1340,7 +1466,7 @@ with open('config.json', 'r') as f:
 # define the consumer to read from the Kafka topic
 
 # define kafka servers from the config file (KAFKA_SERVER variable)
-kafka_servers=[config['KAFKA_SERVER'] + ":29092", config['KAFKA_SERVER'] + ":29093", config['KAFKA_SERVER'] + ":29094"]
+kafka_servers=[config['KAFKA_SERVER'] + config['KAFKA_PORT']]
 consumer = KafkaConsumer(
     config['KAFKA_TOPIC_NAME'],
     bootstrap_servers = kafka_servers,
@@ -1363,14 +1489,11 @@ for message in consumer:
 <div class="paragraph">
 <p>También necesitaremos el archivo <code>config.json</code> con la configuración del consumidor de datos.</p>
 </div>
-<div class="paragraph">
-<div class="title">Archivo <code>config.json</code>: Fichero de configuración con la clave de la API de Finnhub Stock.</div>
-<p>+</p>
-</div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/consumer/config.json"><code>config.json</code></a> de configuración del consumidor de datos.</div>
 <div class="content">
 <pre class="highlight"><code class="language-json" data-lang="json">{
-  "KAFKA_SERVER": "localhost",
+  "KAFKA_SERVER": "kafka",
   "KAFKA_PORT": "29092",
   "KAFKA_TOPIC_NAME": "market"
 }</code></pre>
@@ -1379,11 +1502,22 @@ for message in consumer:
 <div class="paragraph">
 <p>Por último, también necesitaremos el archivo <code>trades.avsc</code> con el esquema Avro que corresponde a los datos codificados.</p>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
 <div class="paragraph">
-<div class="title">Archivo <code>trades.avsc</code>: Esquema Avro para los datos codificados.</div>
-<p>+</p>
+<p>Avro es un sistema de serialización de datos que proporciona un esquema para la codificación de los datos muy utilizado en el contexto de Apache Hadoop y Apache Kafka. El esquema Avro define la estructura de los datos codificados y permite a los consumidores de datos decodificar los mensajes correctamente.</p>
+</div>
+</td>
+</tr>
+</table>
 </div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/consumer/trades.avsc"><code>trades.avsc</code></a> con el esquema Avro para los datos codificados.</div>
 <div class="content">
 <pre class="highlight"><code>{
   "type" : "record",
@@ -1505,31 +1639,21 @@ for message in consumer:
 <p>Con el productor y el consumidor de datos en funcionamiento, podemos confirmar que los datos de Finnhub Stock se están enviando correctamente al servidor de Kafka y que se pueden leer y decodificar correctamente. En el siguiente paso, crearemos el componente Spark Streaming para procesar los datos de las acciones en tiempo real.</p>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_creación_de_un_componente_spark_streaming">3. Creación de un componente Spark Streaming</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_creación_de_un_componente_spark_streaming">3.3. Creación de un componente Spark Streaming</h3>
 <div class="paragraph">
-<p>El componente Spark Streaming procesará los datos de las acciones en tiempo real y calculará estadísticas sobre los precios de las acciones. Utilizaremos Apache Spark para procesar los datos de las acciones y realizar cálculos sobre los precios de las acciones. El componente Spark Streaming leerá los datos del servidor de Kafka, los procesará en tiempo real y los almacenará en la base de datos Cassandra. A continuación, se muestra un ejemplo de código para un componente Spark Streaming en Python.</p>
-</div>
-<div class="paragraph">
-<div class="title">Archivo <code>requirements.txt</code>: Fichero con las dependencias necesarias para el componente Spark Streaming.</div>
-<p>+</p>
+<p>El componente Spark Streaming procesará los datos de las acciones en tiempo real y calculará estadísticas sobre los precios de las acciones. Utilizaremos Apache Spark para procesar los datos de las acciones y realizar cálculos sobre los precios de las acciones. El componente Spark Streaming leerá los datos del servidor de Kafka, los procesará en tiempo real y los almacenará en la base de datos Cassandra. El código del componente Spark Streaming se puede encontrar en la carpeta <code>spark</code> de <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator">este repositorio de GitHub</a>. A continuación, se muestra un ejemplo de código para un componente Spark Streaming en Python.</p>
 </div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/spark/requirements.txt"><code>requirements.txt</code></a> con las dependencias necesarias para el componente Spark Streaming.</div>
 <div class="content">
 <pre class="highlight"><code>pyspark==3.2.1
 kafka-python
 cassandra-driver</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<div class="title">Archivo <code>main.py</code>: Componente Spark Streaming en Python.</div>
-<p>+</p>
-</div>
 <div class="listingblock">
+<div class="title">Archivo <a href="https://github.com/ualmtorres/finnhub-data-streaming-workload-simulator/blob/main/spark/main.py"><code>main.py</code></a> del componente Spark Streaming en Python.</div>
 <div class="content">
 <pre class="highlight"><code class="language-python" data-lang="python">from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
@@ -1541,9 +1665,9 @@ from uuid import uuid1
 # create a Spark session
 spark = SparkSession \
     .builder \
-    .master("spark://localhost:7077") \
+    .master("spark://master:7077") \
     .appName("StreamProcessor") \
-    .config("spark.cassandra.connection.host", 'localhost') \
+    .config("spark.cassandra.connection.host", 'cassandra1') \
     .config("spark.cassandra.connection.port", '9042') \
     .config("spark.cassandra.auth.username", 'cassandra') \
     .config("spark.cassandra.auth.password", 'cassandra') \
@@ -1563,7 +1687,7 @@ def makeUUID():
 inputDF = spark \
     .readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "localhost:29092") \
+    .option("kafka.bootstrap.servers", "kafka:29092") \
     .option("subscribe", "market") \
     .option("minPartitions", "1") \
     .option("maxOffsetsPerTrigger", "1000") \
@@ -1643,12 +1767,16 @@ spark.streams.awaitAnyTermination()</code></pre>
 <ol class="arabic">
 <li>
 <p>Activamos el entorno de Anaconda con Python 3.10.</p>
+</li>
+</ol>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-shell" data-lang="shell">$ conda activate python3_10</code></pre>
 </div>
 </div>
-</li>
+<div class="olist arabic">
+<ol class="arabic">
 <li>
 <p>Instalamos las dependencias necesarias.</p>
 <div class="listingblock">
@@ -1662,18 +1790,40 @@ spark.streams.awaitAnyTermination()</code></pre>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-shell" data-lang="shell">$ spark-submit \
-    --master spark://192.168.65.1:7077 \
+    --master spark://&lt;&lt;SPARK_MASTER&gt;&gt;:7077 \
     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.1,\
     org.apache.spark:spark-avro_2.12:3.2.1,\
     com.datastax.spark:spark-cassandra-connector_2.12:3.2.0 \
     main.py</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>El repositorio contiene un archivo bash <code>run.sh</code> que facilita la ejecución del componente Spark Streaming. El archivo <code>run.sh</code> contiene el comando <code>spark-submit</code> con las opciones necesarias para ejecutar el componente Spark Streaming. Para ejecutar el componente Spark Streaming, simplemente ejecutamos el archivo <code>run.sh</code> desde la terminal (p.e. <code>bash run.sh</code> si estamos en la terminal de Jupyter).</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
 </li>
 </ol>
 </div>
 <div class="paragraph">
-<p>El componente Spark Streaming leerá los datos del servidor de Kafka, los procesará en tiempo real y los almacenará en la base de datos Cassandra. Podremos ver los datos procesados en la base de datos Cassandra utilizando la interfaz web de Cassandra Web. La figura siguiente muestra un ejemplo de datos almacenados en la base de datos Cassandra.</p>
+<p>El componente Spark Streaming leerá los datos del servidor de Kafka, los procesará en tiempo real y los almacenará en la base de datos Cassandra. El resultado de la ejecución del componentes de Spark Streaming se puede consultar en la interfaz web de Spark History Server en la dirección <a href="http://EXTERNAL_IP:18080" class="bare">http://EXTERNAL_IP:18080</a>. Podremos ver los trabajos y las etapas de Spark en la interfaz web de Spark History Server. La figura siguiente muestra un ejemplo de la interfaz web de Spark History Server. Al seleccionar un trabajo o una etapa, podremos ver los detalles del trabajo o la etapa, incluidos los registros y las estadísticas de ejecución. Podremos utilizar la interfaz web de Spark History Server para depurar y optimizar los trabajos y las etapas de Spark.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="images/sparkhistoryserver.png" alt="Spark History Server">
+</div>
+</div>
+<div class="paragraph">
+<p>Al mismo tiempo, los datos procesados se están almacenando en la base de datos Cassandra. Podremos ver los datos procesados en la base de datos Cassandra utilizando Cassandra Web. La figura siguiente muestra un ejemplo de datos almacenados en la base de datos Cassandra.</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -1681,15 +1831,13 @@ spark.streams.awaitAnyTermination()</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Con el componente Spark Streaming en funcionamiento, los datos de las acciones se están procesando en tiempo real y se están almacenando en la base de datos Cassandra. Podremos realizar consultas sobre los datos almacenados en Cassandra y visualizar los resultados en la interfaz web de Cassandra Web. En el siguiente paso, veremos los datos procesados en la interfaz web de Grafana mediante un dashboard interactivo.</p>
+<p>Con el componente Spark Streaming en funcionamiento, los datos de las acciones se están procesando en tiempo real y se están almacenando en la base de datos Cassandra. Podremos realizar consultas sobre los datos almacenados en Cassandra y visualizar los resultados en Cassandra Web. En el siguiente paso, veremos los datos procesados en la interfaz web de Grafana mediante un dashboard interactivo.</p>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_visualización_de_los_datos_en_grafana">4. Visualización de los datos en Grafana</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_visualización_de_los_datos_en_grafana">3.4. Visualización de los datos en Grafana</h3>
 <div class="paragraph">
-<p>Grafana es una plataforma de visualización de datos que utilizaremos para visualizar los datos de las acciones en tiempo real. Utilizaremos Grafana para crear un dashboard interactivo que muestre los precios de las acciones y las estadísticas calculadas por el componente Spark Streaming. El dashboard mostrará gráficos en tiempo real de los precios de las acciones y las medias móviles de los precios de las acciones. El dashboard se cargó en Grafana al iniciar la plataforma mediante un archivo de configuración en formato JSON (<code>dashboard.json</code>). Se trata de un dashboard de ejemplo con tres paneles: uno para mostrar los precios de las acciones, otro para mostrar el volumen de las acciones y otro para mostrar las medias móviles de los precios de las acciones en un intervalo de 15 segundos.</p>
+<p>Grafana es una plataforma de visualización de datos que utilizaremos para visualizar los datos de las acciones en tiempo real. Utilizaremos Grafana para crear un dashboard interactivo que muestre los precios de las acciones y las estadísticas calculadas por el componente Spark Streaming. El dashboard mostrará gráficos en tiempo real de los precios de las acciones y las medias móviles de los precios de las acciones. El dashboard se cargó en Grafana añadiéndole un archivo de configuración en formato JSON (<a href="https://github.com/ualmtorres/finnhub-data-streaming-docker-compose/blob/main/grafana/dashboards/dashboard.json"><code>dashboard.json</code></a>) al crear la imagen de Grafana que se está usando en este tutorial. Se trata de un dashboard de ejemplo con tres paneles: uno para mostrar los precios de las acciones, otro para mostrar el volumen de las acciones y otro para mostrar las medias móviles de los precios de las acciones en un intervalo de 15 segundos.</p>
 </div>
 <div class="paragraph">
 <p>Para acceder al dashboard en Grafana, abrimos un navegador web y vamos a la dirección <a href="http://EXTERNAL_IP:3000" class="bare">http://EXTERNAL_IP:3000</a>. El dashboard se muestra de forma predeterminada en la página principal de Grafana. Podremos ver los gráficos en tiempo real de los precios de las acciones y las medias móviles de los precios de las acciones en el dashboard. La figura siguiente muestra un ejemplo de un dashboard interactivo en Grafana.</p>
@@ -1704,18 +1852,19 @@ spark.streams.awaitAnyTermination()</code></pre>
 </div>
 </div>
 </div>
+</div>
 <div class="sect1">
-<h2 id="_conclusiones">5. Conclusiones</h2>
+<h2 id="_conclusiones">4. Conclusiones</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>En este tutorial, hemos creado una plataforma de data streaming y visualización de Finnhub Stock. Se trata de una plataforma completa para visualizar los precios en tiempo real de las acciones de una empresa. Hemos utilizado tecnologías de Big Data como Apache Kafka, Apache Spark, Apache Cassandra, Grafana y Jupyter para procesar los datos de las acciones en tiempo real y visualizarlos en un dashboard interactivo. Tambien se ha utilizado Infraestructura como Código (IaC) con Terraform para crear la máquina virtual en OpenStack, mostrando cómo se puede automatizar el despliegue de la plataforma en un entorno cloud. Además, hemos utilizado contenedores, concretamente Docker, para desplegar los componentes de la plataforma, mostrando cómo se puede empaquetar y desplegar aplicaciones de forma sencilla y portátil. Con esta plataforma, podremos realizar análisis de datos sobre las acciones y tomar decisiones informadas sobre inversiones financieras.</p>
+<p>En este tutorial hemos creado una plataforma de data streaming y visualización de Finnhub Stock. Se trata de una plataforma completa para visualizar los precios en tiempo real de las acciones de una empresa. Hemos utilizado tecnologías de Big Data como Apache Kafka, Apache Spark, Apache Cassandra, Grafana y Jupyter para procesar los datos de las acciones en tiempo real y visualizarlos en un dashboard interactivo. Tambien se ha utilizado Infraestructura como Código (IaC) con Terraform para crear la máquina virtual en OpenStack, mostrando cómo se puede automatizar el despliegue de la plataforma en un entorno cloud. Además, hemos utilizado contenedores, concretamente Docker, para desplegar los componentes de la plataforma, mostrando cómo se puede empaquetar y desplegar aplicaciones de forma sencilla y portable. Con esta plataforma podremos realizar análisis de datos sobre las acciones y tomar decisiones sobre inversiones financieras basadas en los datos.</p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2024-04-18 00:34:11 +0200
+Last updated 2024-04-18 17:49:10 +0200
 </div>
 </div>
 </body>
